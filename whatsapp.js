@@ -77,10 +77,14 @@ export async function startWhatsAppClient() {
         const allowedChatsEnv = process.env.ALLOWED_WHATSAPP_CHATS || '';
         const allowedChats = allowedChatsEnv.split(',').map(s => s.trim()).filter(Boolean);
         
+        console.log(`[DEBUG] Direct message from ${remoteJid}. Allowed chats config:`, allowedChats);
+        
         if (allowedChats.length === 0) {
           shouldProcess = true;
+          console.log(`[DEBUG] No whitelist configured. Processing message.`);
         } else {
           shouldProcess = allowedChats.some(chat => remoteJid.includes(chat));
+          console.log(`[DEBUG] Whitelist match result: ${shouldProcess}`);
         }
       } else {
         // Group message: check if we are mentioned or if there's an @everyone
@@ -95,9 +99,15 @@ export async function startWhatsAppClient() {
         const mentionsMe = mentionedJids.includes(myId);
         const mentionsEveryone = text.includes('@everyone') || text.includes('@all');
 
+        console.log(`[DEBUG] Group message from ${remoteJid}. Mentions me: ${mentionsMe}, Mentions everyone: ${mentionsEveryone}`);
+
         if (mentionsMe || mentionsEveryone) {
           shouldProcess = true;
         }
+      }
+
+      if (!shouldProcess) {
+        console.log(`[DEBUG] Ignoring message from ${remoteJid}. shouldProcess=false`);
       }
 
       if (shouldProcess) {
