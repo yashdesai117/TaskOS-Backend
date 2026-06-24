@@ -59,6 +59,7 @@ export async function startWhatsAppClient() {
       const remoteJid = msg.key.remoteJid; // The chat ID (user or group)
       const isGroup = remoteJid.endsWith('@g.us');
       const senderId = msg.key.participant || remoteJid; // Who sent it
+      const senderName = msg.pushName || senderId.split('@')[0];
 
       // Get text
       const text = msg.message.conversation || 
@@ -66,6 +67,15 @@ export async function startWhatsAppClient() {
                    '';
 
       if (!text) continue;
+
+      // Filter by Allowed Chats
+      const allowedChatsEnv = process.env.ALLOWED_WHATSAPP_CHATS || '';
+      const allowedChats = allowedChatsEnv.split(',').map(s => s.trim()).filter(Boolean);
+      
+      if (allowedChats.length > 0) {
+        const isAllowed = allowedChats.some(chat => remoteJid.includes(chat));
+        if (!isAllowed) continue;
+      }
 
       let shouldProcess = false;
 
@@ -91,10 +101,10 @@ export async function startWhatsAppClient() {
       }
 
       if (shouldProcess) {
-        console.log(`\n💬 Received message to process from ${senderId}:\n"${text}"`);
+        console.log(`\n💬 Received message to process from ${senderName} (${senderId}):\n"${text}"`);
         console.log('🧠 Sending to AI for triage...');
         
-        const aiResponse = await extractTaskFromMessage(text, senderId);
+        const aiResponse = await extractTaskFromMessage(text, senderName);
         
         if (aiResponse && aiResponse.isTask) {
           console.log('🎯 AI identified a task:', aiResponse);
@@ -110,7 +120,7 @@ export async function startWhatsAppClient() {
             status: 'open',
             createdAt: new Date().toISOString(),
             rawMessage: text,
-            sender: senderId
+            sender: senderName
           };
 
           generatedTasks.push(newTask);
