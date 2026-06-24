@@ -68,20 +68,20 @@ export async function startWhatsAppClient() {
 
       if (!text) continue;
 
-      // Filter by Allowed Chats
-      const allowedChatsEnv = process.env.ALLOWED_WHATSAPP_CHATS || '';
-      const allowedChats = allowedChatsEnv.split(',').map(s => s.trim()).filter(Boolean);
-      
-      if (allowedChats.length > 0) {
-        const isAllowed = allowedChats.some(chat => remoteJid.includes(chat));
-        if (!isAllowed) continue;
-      }
+      // We will check allowed chats inside the direct message block
 
       let shouldProcess = false;
 
       if (!isGroup) {
-        // Direct message
-        shouldProcess = true;
+        // Direct message - filter by Allowed Chats
+        const allowedChatsEnv = process.env.ALLOWED_WHATSAPP_CHATS || '';
+        const allowedChats = allowedChatsEnv.split(',').map(s => s.trim()).filter(Boolean);
+        
+        if (allowedChats.length === 0) {
+          shouldProcess = true;
+        } else {
+          shouldProcess = allowedChats.some(chat => remoteJid.includes(chat));
+        }
       } else {
         // Group message: check if we are mentioned or if there's an @everyone
         // ContextInfo contains mentionedJid array
