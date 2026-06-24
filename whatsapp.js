@@ -83,7 +83,10 @@ export async function startWhatsAppClient() {
           shouldProcess = true;
           console.log(`[DEBUG] No whitelist configured. Processing message.`);
         } else {
-          shouldProcess = allowedChats.some(chat => remoteJid.includes(chat));
+          shouldProcess = allowedChats.some(chat => 
+            remoteJid.includes(chat) || 
+            (senderName && senderName.toLowerCase().includes(chat.toLowerCase()))
+          );
           console.log(`[DEBUG] Whitelist match result: ${shouldProcess}`);
         }
       } else {
